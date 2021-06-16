@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const config = require("config");
+
 const {
   check,
   validationResult,
@@ -38,7 +41,9 @@ router.post(
       });
 
       if (user) {
-        res.status(400).json({ errors: [{ msg: "User allready exists" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User allready exists" }] });
       }
 
       //Get users gravatar
@@ -63,9 +68,25 @@ router.post(
       user.password = await bcrypt.hash(password, salt);
 
       await user.save(); /*this save or update a user in the db, its mongoose syntax*/
+      //after user is saved we get trough a callback an id wich is accesible as user.id, this id is foundable on our mongodb database as the pk of the user
+      //(_id wich can be accessed without the underscore)
 
       //Return jsonwebtoken so that user gets loged in as soon as they send a request to log in
-      res.send("User registered");
+      const payload = {
+        user: {
+          id: user.id,
+        },
+      };
+
+      jwt.sign(
+        payload,
+        config.get("jwtSecret"),
+        { expiresIn: 360000 },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
     } catch (err) {
       console.log(err.message);
       res.status(500).send("Server error");

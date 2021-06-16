@@ -5,6 +5,8 @@ const db = config.get("mongoURI");
 const connectDB = async () => {
   try {
     await mongoose.connect(db, {
+      useFindAndModify: false, //DeprecationWarning: Mongoose: `findOneAndUpdate()` and `findOneAndDelete()` without the `useFindAndModify`
+      //option set to false are deprecated so we use it here when connecting to the db
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useCreateIndex: true,
