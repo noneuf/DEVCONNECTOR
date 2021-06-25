@@ -69,7 +69,7 @@ router.post(
 
       await user.save(); /*this save or update a user in the db, its mongoose syntax*/
       //after user is saved we get trough a callback an id wich is accesible as user.id, this id is foundable on our mongodb database as the pk of the user
-      //(_id wich can be accessed without the underscore)
+      //(_id which cant be accessed without the underscore)
 
       //Return jsonwebtoken so that user gets loged in as soon as they send a request to log in
       const payload = {

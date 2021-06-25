@@ -4,7 +4,7 @@ const auth = require("../../middleware/auth");
 const { check, validationResult } = require("express-validator");
 
 const Profile = require("../../models/Profile");
-const USer = require("../../models/Profile");
+const User = require("../../models/Profile");
 // @route     GET api/profile/me
 // @desc      Get current users profile
 // @access    Public
@@ -143,5 +143,70 @@ router.get("/user/:user_id", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+// @route     DELETE api/profile
+// @desc      Delete profile, user and posts
+// @access    Private
+router.delete("/", auth, async (req, res) => {
+  try {
+    // @todo - remove users posts
+    // Remove profile
+    await Profile.findOneAndRemove({ user: req.user.id });
+    // Remove user
+    await User.findOneAndRemove({ _id: req.user.id });
+
+    res.json({ msg: "User deleted" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route     PUT api/profile/experience
+// @desc      Add profile experience
+// @access    Private
+router.put(
+  "/experience",
+  [
+    auth,
+    [
+      check("title", "Title is required").not().isEmpty(),
+      check("company", "Company is required").not().isEmpty(),
+      check("from", "From date is required").not().isEmpty(),
+    ],
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { title, company, location, from, to, current, descrption } =
+      req.body;
+
+    const newExp = {
+      title, //remember this is a shortened syntax for: title: title
+      company,
+      location,
+      from,
+      to,
+      current,
+      descrption,
+    };
+
+    try {
+      const profile = await Profile.findOne({ user: req.user.id });
+
+      profile.experience.unshift(newExp); // The unshift() method adds new items to the beginning of an array, and returns the new length
+
+      await profile.save();
+
+      res.json(profile);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+    }
+  }
+);
 
 module.exports = router;
